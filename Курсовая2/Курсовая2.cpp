@@ -93,10 +93,7 @@ void saveToFile(const string& filename, const vector<Person>& people) {
 			cout << "Файл с именем " << filename << " уже существует. Желаете перезаписать его (1) или добавить данные (2)? ";
 			getline(cin, choice);
 
-			if (choice == "1") {
-				break;
-			}
-			else if (choice == "2") {
+			if (choice == "1" || choice == "2") {
 				break;
 			}
 			else {
@@ -206,23 +203,29 @@ void addPerson() {
 		getline(cin >> ws, person.name_person);
 	}
 
-	// Запрашиваем год рождения
 	cout << "Введите год рождения: ";
 	while (!(cin >> person.years_old) || person.years_old < 1900 || person.years_old > 2024) {
-		cout << "Год рождения должен быть не ранее 1900 и не позже 202, а так же не должен содержать буквы и специальные символы. Пожалуйста, введите снова: ";
+		cout << "Год рождения должен быть не ранее 1900 и не позже 2024. Пожалуйста, введите снова: ";
 		cin.clear();
 		cin.ignore(1000, '\n');
 	}
-	cin.ignore();
+
+	// Проверяем год рождения на наличие специальных символов
+	string years_old_str = to_string(person.years_old);
+	while (containsSpecialCharacters(years_old_str)) {
+		cout << "Год рождения не должен содержать специальные символы. Пожалуйста, введите снова: ";
+		cin >> person.years_old;
+		years_old_str = to_string(person.years_old);
+	}
 
 	// Запрашиваем пол
 	cout << "Введите пол (мужской/женский): ";
 	do {
 		getline(cin, person.gender);
-		if (person.gender != "мужской" && person.gender != "женский" && person.gender != "ж" && person.gender != "м") {
+		if (person.gender != "мужской" && person.gender != "женский" && person.gender != "Мужской" && person.gender != "Женский") {
 			cout << "Некорректное значение пола. Пожалуйста, введите снова: ";
 		}
-	} while (person.gender != "мужской" && person.gender != "женский" && person.gender != "ж" && person.gender != "м");
+	} while (person.gender != "мужской" && person.gender != "женский" && person.gender != "Мужской" && person.gender != "Женский");
 
 	// Запрашиваем место жительства
 	cout << "Введите место жительства (город): ";
@@ -255,7 +258,6 @@ void addPerson() {
 		cin.clear();
 		cin.ignore(1000, '\n');
 	}
-	cin.ignore();
 
 	// Запрашиваем место работы
 	cout << "Введите место работы: ";
@@ -345,7 +347,7 @@ void addPerson() {
 void clearPeople() {
 
 	if (people.empty()) {
-		cout << "Вектор данных пуст. Вам нечего очищать." << endl;
+		cout << "Пока вы не ввели данные, очистка невозможна" << endl;
 		return;
 	}
 
@@ -367,7 +369,7 @@ void clearPeople() {
 
 void averageYear() {
 	if (people.empty()) {
-		cout << "Вектор данных пуст. Вы не ввели данные для вычисления среднего возраста." << endl;
+		cout << "Пока вы не ввели данные, очистка невозможна." << endl;
 		return;
 	}
 
@@ -476,53 +478,46 @@ size_t maxLength(const vector<string>& strings) {
 
 // Функция для печати таблицы с информацией о людях
 void printTable(const vector<Person>& people) {
-
 	if (people.empty()) {
 		cout << "Вектор данных пуст." << endl;
 		return;
 	}
-	// Определяем максимальную длину для каждого столбца
-	vector<string> names;
-	vector<string> years;
-	vector<string> genders;
-	vector<string> places;
-	vector<string> educations;
-	vector<string> kids;
-	vector<string> jobs;
 
-	for (const auto& person : people) {
-		names.push_back(person.name_person);
-		years.push_back(to_string(person.years_old));
-		genders.push_back(person.gender);
-		places.push_back(person.place_life);
-		educations.push_back(person.education_level);
-		kids.push_back(to_string(person.count_kids));
-		jobs.push_back(person.job);
-	}
+	// Определение максимальной длины для каждого столбца на основе заголовков
+	size_t max_name_length = 35;  // Минимальная длина для ФИО
+	size_t max_year_length = 13;  // Минимальная длина для Года рождения
+	size_t max_gender_length = 9; // Минимальная длина для Пола
+	size_t max_place_length = 19; // Минимальная длина для Места жительства
+	size_t max_education_length = 21; // Минимальная длина для Уровня образования
+	size_t max_kids_length = 18; // Минимальная длина для Количества детей
+	size_t max_job_length = 15; // Минимальная длина для Места работы
 
-	size_t max_name_length = maxLength(names);
-	size_t max_year_length = maxLength(years);
-	size_t max_gender_length = maxLength(genders);
-	size_t max_place_length = maxLength(places);
-	size_t max_education_length = maxLength(educations);
-	size_t max_kids_length = maxLength(kids);
-	size_t max_job_length = maxLength(jobs);
+	// Печать заголовка таблицы
+	cout << "ID | " << setw(max_name_length) << left << "ФИО" << " | "
+		<< setw(max_year_length) << left << "Год рождения" << " | "
+		<< setw(max_gender_length) << left << "Пол" << " | "
+		<< setw(max_place_length) << left << "Место жительства" << " | "
+		<< setw(max_education_length) << left << "Уровень образования" << " | "
+		<< setw(max_kids_length) << left << "Количество детей" << " | "
+		<< setw(max_job_length) << left << "Место работы" << endl;
 
-	cout << "" << "ID |              ФИО                 |    Год рождения     |      Пол     |     Место жительства     |      Уровень образования     |     Количество детей     |    Место работы    " << endl;
-	cout << "-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
+	// Печать разделителя
+	cout << setfill('-') << setw(4 + max_name_length + max_year_length + max_gender_length
+		+ max_place_length + max_education_length + max_kids_length + max_job_length) << "-" << endl;
 
+	// Печать данных о людях
 	for (size_t i = 0; i < people.size(); ++i) {
-		cout << setw(5) << left << i + 1;
-		cout << setw(max_name_length + 8) << left << people[i].name_person;
-		cout << "   ";
-		cout << setw(max_year_length + 12) << left << people[i].years_old;
-		cout << setw(max_gender_length + 14) << left << people[i].gender;
-		cout << setw(max_place_length + 13) << left << people[i].place_life;
-		cout << setw(max_education_length + 14) << left << people[i].education_level;
-		cout << setw(max_kids_length + 16) << left << people[i].count_kids;
-		cout << setw(max_job_length + 2) << left << people[i].job << endl;
+		cout << setfill(' ') << setw(2) << right << i + 1 << " | "
+			<< setw(max_name_length) << left << people[i].name_person << " | "
+			<< setw(max_year_length) << left << people[i].years_old << " | "
+			<< setw(max_gender_length) << left << people[i].gender << " | "
+			<< setw(max_place_length) << left << people[i].place_life << " | "
+			<< setw(max_education_length) << left << people[i].education_level << " | "
+			<< setw(max_kids_length) << left << people[i].count_kids << " | "
+			<< setw(max_job_length) << left << people[i].job << endl;
 	}
 }
+
 
 // Функция для вывода информации о человеке
 void printPerson(const Person& person) {
@@ -663,13 +658,13 @@ void editPerson() {
 		}
 		cin.ignore();
 
-		cout << "Введите пол (Мужской/Женский): ";
+		cout << "Введите пол (мужской/женский): ";
 		do {
 			getline(cin, person.gender);
-			if (person.gender != "мужской" && person.gender != "женский") {
+			if (person.gender != "мужской" && person.gender != "женский" && person.gender != "Мужской" && person.gender != "Женский") {
 				cout << "Некорректное значение пола. Пожалуйста, введите снова: ";
 			}
-		} while (person.gender != "мужской" && person.gender != "женский");
+		} while (person.gender != "мужской" && person.gender != "женский" && person.gender != "Мужской" && person.gender != "Женский");
 
 		cout << "Введите новое место жительства (город): ";
 		getline(cin, person.place_life);
@@ -734,40 +729,118 @@ void editPerson() {
 }
 
 
-void search() {
-
+void search(const vector<Person>& people) {
 	if (people.empty()) {
 		cout << "Вектор данных пуст. Вы не ввели данные для поиска." << endl;
 		return;
 	}
 
-	string surname;
-	cout << "Введите фамилию пользователя, данные которого хотите найти: ";
-	getline(cin, surname);
+	cout << "Выберите метод поиска:" << endl;
+	cout << "1. По данным (фамилия, год рождения, пол)" << endl;
+	cout << "2. По началу фамилии" << endl;
 
-	int birthYear;
-	cout << "Введите год рождения пользователя, данные которого хотите найти: ";
-	cin >> birthYear;
+	int choice;
+	cout << "Ваш выбор: ";
+	cin >> choice;
 	cin.ignore();
 
-	string gender;
-	cout << "Введите пол пользователя (мужской/женский): ";
-	getline(cin, gender);
+	if (choice == 1) {
+		string surname;
+		cout << "Введите фамилию пользователя, данные которого хотите найти: ";
+		getline(cin, surname);
 
-	cout << " " << endl;
-	// Проверяем каждого человека в векторе
-	bool found = false;
-	for (const auto& person : people) {
-		// Проверяем, соответствуют ли данные введенным критериям
-		if (person.name_person.find(surname) != string::npos && person.years_old == birthYear && person.gender == gender) {
-			// Выводим найденного человека
-			cout << "Найден следующий человек: " << endl;
-			printPerson(person);
-			found = true;
+		int birthYear;
+		cout << "Введите год рождения пользователя, данные которого хотите найти: ";
+		cin >> birthYear;
+		cin.ignore();
+
+		string gender;
+		cout << "Введите пол пользователя (мужской/женский): ";
+		getline(cin, gender);
+
+		cout << endl;
+
+		// Создаем временный вектор для хранения найденных людей
+		vector<Person> foundPeople;
+
+		// Проверяем каждого человека в векторе
+		for (const auto& person : people) {
+			// Проверяем, соответствуют ли данные введенным критериям
+			if (person.name_person == surname && person.years_old == birthYear && person.gender == gender) {
+				// Добавляем найденного человека во временный вектор
+				foundPeople.push_back(person);
+			}
+		}
+
+		// Выводим результаты поиска в виде таблицы
+		printTable(foundPeople);
+
+		// Спрашиваем пользователя, хочет ли он сохранить результаты поиска в файл
+		cout << "Хотите сохранить результаты поиска в файл? (да/нет): ";
+		string saveChoice;
+		getline(cin, saveChoice);
+
+		if (saveChoice == "да") {
+			string filename;
+			cout << "Введите название файла (без расширения '.txt'): ";
+			getline(cin, filename);
+			filename += ".txt";
+
+			// Сохраняем результаты поиска в файл
+			saveToFile(filename, foundPeople);
+		}
+		else if (saveChoice == "нет") {
+			cout << "Результаты поиска не сохранены." << endl;
+		}
+		else {
+			cout << "Некорректный выбор. Результаты поиска не сохранены." << endl;
 		}
 	}
-	if (!found) {
-		cout << "Человек с указанными данными не найден." << endl;
+	else if (choice == 2) {
+		string surname;
+		cout << "Введите начало фамилии пользователя, данные которого хотите найти: ";
+		getline(cin, surname);
+
+		cout << endl;
+
+		// Создаем временный вектор для хранения найденных людей
+		vector<Person> foundPeople;
+
+		// Проверяем каждого человека в векторе
+		for (const auto& person : people) {
+			// Проверяем, начинается ли фамилия с указанной последовательности символов
+			if (person.name_person.find(surname) == 0) {
+				// Добавляем найденного человека во временный вектор
+				foundPeople.push_back(person);
+			}
+		}
+
+		// Выводим результаты поиска в виде таблицы
+		printTable(foundPeople);
+
+		// Спрашиваем пользователя, хочет ли он сохранить результаты поиска в файл
+		cout << "Хотите сохранить результаты поиска в файл? (да/нет): ";
+		string saveChoice;
+		getline(cin, saveChoice);
+
+		if (saveChoice == "да") {
+			string filename;
+			cout << "Введите название файла (без расширения '.txt'): ";
+			getline(cin, filename);
+			filename += ".txt";
+
+			// Сохраняем результаты поиска в файл
+			saveToFile(filename, foundPeople);
+		}
+		else if (saveChoice == "нет") {
+			cout << "Результаты поиска не сохранены." << endl;
+		}
+		else {
+			cout << "Некорректный выбор. Результаты поиска не сохранены." << endl;
+		}
+	}
+	else {
+		cout << "Некорректный выбор. Пожалуйста, выберите 1 или 2." << endl;
 	}
 }
 
@@ -1088,6 +1161,12 @@ void listSameSurnamesInCity() {
 }
 
 void saveOrExit() {
+
+	if (people.empty()) {
+		cout << "Никаких изменений не было, сохранять нечего." << endl;
+		exit(0);
+	}
+
 	string choice;
 	do {
 		cout << "Хотите сохранить данные перед выходом? (да/нет): ";
@@ -1101,7 +1180,6 @@ void saveOrExit() {
 			return; // Возвращаемся из функции, так как пользователь сделал правильный выбор
 		}
 		else if (choice == "нет" || choice == "Нет") {
-			cout << "До свидания!" << endl;
 			return; // Возвращаемся из функции, так как пользователь сделал правильный выбор
 		}
 		else {
@@ -1150,17 +1228,47 @@ void readTxtFilesFromCurrentDirectory() {
 	int fileCount = 0;
 
 	if (hFind != INVALID_HANDLE_VALUE) {
-		cout << "Найдены следующие файлы:" << endl;
+		// Считаем количество файлов
 		do {
-			char filename[260];
-			WideCharToMultiByte(CP_ACP, 0, findData.cFileName, -1, filename, 260, NULL, NULL);
-			cout << ++fileCount << ". " << filename << endl;
+			fileCount++;
 		} while (FindNextFile(hFind, &findData) != 0);
 		FindClose(hFind);
+	
+		if (fileCount < 5)
+		{
+			cout << "Найдено " << fileCount << " файла:" << endl;
+		}
+
+		if (fileCount > 4)
+		{
+			cout << "Найдено " << fileCount << " файлов:" << endl;
+		} 
+
+		// Теперь проходим по файлам снова, чтобы вывести их имена
+		hFind = FindFirstFile(L"*.txt", &findData);
+		int currentFileCount = 0;
+		if (hFind != INVALID_HANDLE_VALUE) {
+			do {
+				char filename[260];
+				WideCharToMultiByte(CP_ACP, 0, findData.cFileName, -1, filename, 260, NULL, NULL);
+				cout << ++currentFileCount << ". " << filename << endl;
+			} while (FindNextFile(hFind, &findData) != 0);
+			FindClose(hFind);
+		}
 	}
 	else {
 		cerr << "В текущей папке не найдены файлы с расширением .txt" << endl;
 	}
+}
+
+vector<string> readPreviousFiles(const string& filename) {
+	vector<string> fileList;
+	ifstream file(filename);
+	string line;
+	while (getline(file, line)) {
+		fileList.push_back(line);
+	}
+	return fileList;
 }
 
 
@@ -1175,7 +1283,7 @@ int main()
 		printMenu();
 		cout << "Выберите действие: ";
 		if (!(cin >> choice)) {
-			cout << "Ошибка: неправильный ввод. Пожалуйста, введите число от 1 до 16." << endl;
+			cout << "Ошибка: неправильный ввод. Пожалуйста, введите число от 1 до 18." << endl;
 			cin.clear();
 			cin.ignore(1000, '\n');
 			continue;
@@ -1231,7 +1339,7 @@ int main()
 		}
 
 		case 7:
-			search();
+			search(people);
 			break;
 		case 8:
 		{
@@ -1319,3 +1427,6 @@ int main()
 //удаление данных о человеке переделано
 //добавлены подтверждение 
 //переработаны edit и delete
+
+
+//найдены n файлов сделать
