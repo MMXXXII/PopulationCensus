@@ -33,11 +33,11 @@
 #include <codecvt>
 #include <locale>
 #include <map>
-#include <filesystem>
 
 
 
 using namespace std;
+
 
 struct Person
 {
@@ -183,29 +183,33 @@ void addPerson() {
 		getline(cin >> ws, person.name_person);
 	}
 
-	stringstream ss(person.name_person);
-	string word;
-	bool isValid = true;
-	while (ss >> word) {
-		if (word.length() < 3) {
-			isValid = false;
-			break;
-		}
-	}
-	if (!isValid) {
-		cout << "Каждая часть ФИО (Фамилия, Имя, Отчество) должна содержать не менее трех букв. Пожалуйста, введите снова." << endl;
-		getline(cin >> ws, person.name_person);
-	}
+	//stringstream ss(person.name_person);
+	//string word;
+	//bool isValid = true;
+	//int wordCount = 0;
+	//while (ss >> word) {
+	//	++wordCount;
+	//	if (word.empty() || !isupper(word[0])) {
+	//		isValid = false;
+	//		break;
+	//	}
+	//}
+	//if (wordCount != 3 || !isValid) {
+	//	cout << "Каждая часть ФИО (Фамилия, Имя, Отчество) должна начинаться с заглавной буквы. Пожалуйста, введите снова." << endl;
+	//	addPerson(); // Рекурсивно повторяем ввод ФИО
+	//	return;
+	//}
 
+	// Проверяем, что ФИО не содержит специальных символов
 	while (containsSpecialCharacters(person.name_person)) {
-		cout << "ФИО не должно содержать специальные символы (-, %, $, # и другие). Пожалуйста, введите снова: ";
+		cout << "ФИО не должно содержать специальные символы (%, $, # и другие). Пожалуйста, введите снова: ";
 		getline(cin >> ws, person.name_person);
 	}
 
 	// Запрашиваем год рождения
 	cout << "Введите год рождения: ";
 	while (!(cin >> person.years_old) || person.years_old < 1900 || person.years_old > 2024) {
-		cout << "Год рождения должен быть не ранее 1900 и не позже 2024. Пожалуйста, введите снова: ";
+		cout << "Год рождения должен быть не ранее 1900 и не позже 202, а так же не должен содержать буквы и специальные символы. Пожалуйста, введите снова: ";
 		cin.clear();
 		cin.ignore(1000, '\n');
 	}
@@ -215,10 +219,10 @@ void addPerson() {
 	cout << "Введите пол (мужской/женский): ";
 	do {
 		getline(cin, person.gender);
-		if (person.gender != "мужской" && person.gender != "женский") {
+		if (person.gender != "мужской" && person.gender != "женский" && person.gender != "ж" && person.gender != "м") {
 			cout << "Некорректное значение пола. Пожалуйста, введите снова: ";
 		}
-	} while (person.gender != "мужской" && person.gender != "женский");
+	} while (person.gender != "мужской" && person.gender != "женский" && person.gender != "ж" && person.gender != "м");
 
 	// Запрашиваем место жительства
 	cout << "Введите место жительства (город): ";
@@ -439,27 +443,6 @@ void averageYear() {
 	}
 }
 
-void readTxtFilesInDirectory(const string& directoryPath) {
-	for (const auto& entry : fs::directory_iterator(directoryPath)) {
-		if (entry.is_regular_file() && entry.path().extension() == ".txt") {
-			ifstream file(entry.path());
-			if (file) {
-				cout << "Содержимое файла " << entry.path().filename() << ":" << endl;
-				string line;
-				while (getline(file, line)) {
-					cout << line << endl;
-				}
-				file.close();
-				cout << endl;
-			}
-			else {
-				cerr << "Ошибка при открытии файла: " << entry.path().filename() << endl;
-			}
-		}
-	}
-}
-
-
 void printMenu()
 {
 	cout << " " << endl;
@@ -525,10 +508,8 @@ void printTable(const vector<Person>& people) {
 	size_t max_kids_length = maxLength(kids);
 	size_t max_job_length = maxLength(jobs);
 
-
-	cout <<  "" << "ID |              ФИО                 |    Год рождения     |      Пол     |     Место жительства     |      Уровень образования     |     Количество детей     |    Место работы    " << endl;
-
-	cout << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
+	cout << "" << "ID |              ФИО                 |    Год рождения     |      Пол     |     Место жительства     |      Уровень образования     |     Количество детей     |    Место работы    " << endl;
+	cout << "-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
 
 	for (size_t i = 0; i < people.size(); ++i) {
 		cout << setw(5) << left << i + 1;
@@ -773,6 +754,7 @@ void search() {
 	cout << "Введите пол пользователя (мужской/женский): ";
 	getline(cin, gender);
 
+	cout << " " << endl;
 	// Проверяем каждого человека в векторе
 	bool found = false;
 	for (const auto& person : people) {
@@ -915,7 +897,10 @@ void sortData(const string& criterion) {
 	sort(people.begin(), people.end(), [criterion](const Person& person1, const Person& person2) {
 		return comparePeople(person1, person2, criterion);
 		});
+
+	printTable(people);
 }
+
 
 void printData(const string& criterion, const string& filename) {
 	// Проверяем, существует ли уже файл с таким именем
@@ -1066,25 +1051,39 @@ void mostPopulatedCity() {
 }
 
 void listSameSurnamesInCity() {
-
-	map<string, vector<string>> surnameLists;
+	map<pair<string, string>, vector<string>> surnameLists;
 
 	// Заполняем карту данными
 	for (const auto& person : people) {
 		string surname = person.name_person.substr(0, person.name_person.find(' ')); // Получаем фамилию
+		string city = person.place_life;
 
 		// Добавляем имя в список для соответствующей фамилии и города
-		surnameLists[person.place_life + " " + surname].push_back(person.name_person);
+		surnameLists[{city, surname}].push_back(person.name_person);
 	}
 
 	// Выводим списки однофамильцев
+	bool hasSameSurnames = false;
 	for (const auto& pair : surnameLists) {
-		cout << "Город: " << pair.first << endl;
-		cout << "Однофамильцы: ";
-		for (const auto& name : pair.second) {
-			cout << name << ", ";
+		if (pair.second.size() > 1) { // Если в городе больше одного однофамильца
+			hasSameSurnames = true;
+			break;
 		}
-		cout << endl << endl;
+	}
+
+	// Выводим списки однофамильцев
+	if (hasSameSurnames) {
+		cout << left << setw(30) << "Город" << " | " << "Однофамильцы" << endl;
+		for (const auto& pair : surnameLists) {
+			if (pair.second.size() > 1) { // Если в городе больше одного однофамильца
+				for (const auto& name : pair.second) {
+					cout << setw(30) << pair.first.second + " " + pair.first.first << " | " << name << endl;
+				}
+			}
+		}
+	}
+	else {
+		cout << "Нет городов с однофамильцами." << endl;
 	}
 }
 
@@ -1110,6 +1109,60 @@ void saveOrExit() {
 		}
 	} while (true); // Повторяем, пока пользователь не сделает правильный выбор
 }
+
+//считывает информацию с файлов и выводит ее
+//void readTxtFilesFromCurrentDirectory() {
+//	WIN32_FIND_DATA findData;
+//	HANDLE hFind = FindFirstFile(L"*.txt", &findData);
+//
+//	if (hFind != INVALID_HANDLE_VALUE) {
+//		do {
+//			// Преобразование WCHAR в char
+//			char filename[260];
+//			WideCharToMultiByte(CP_ACP, 0, findData.cFileName, -1, filename, 260, NULL, NULL);
+//
+//			cout << "Reading file: " << filename << endl;
+//
+//			// Открываем файл для чтения
+//			ifstream file(filename);
+//			if (file.is_open()) {
+//				string line;
+//				// Считываем и выводим содержимое файла построчно
+//				while (getline(file, line)) {
+//					cout << line << endl;
+//				}
+//				file.close();
+//			}
+//			else {
+//				cerr << "Error opening file: " << filename << endl;
+//			}
+//		} while (FindNextFile(hFind, &findData) != 0);
+//		FindClose(hFind);
+//	}
+//	else {
+//		cerr << "No .txt files found in the current directory." << endl;
+//	}
+//}
+
+void readTxtFilesFromCurrentDirectory() {
+	WIN32_FIND_DATA findData;
+	HANDLE hFind = FindFirstFile(L"*.txt", &findData);
+	int fileCount = 0;
+
+	if (hFind != INVALID_HANDLE_VALUE) {
+		cout << "Найдены следующие файлы:" << endl;
+		do {
+			char filename[260];
+			WideCharToMultiByte(CP_ACP, 0, findData.cFileName, -1, filename, 260, NULL, NULL);
+			cout << ++fileCount << ". " << filename << endl;
+		} while (FindNextFile(hFind, &findData) != 0);
+		FindClose(hFind);
+	}
+	else {
+		cerr << "В текущей папке не найдены файлы с расширением .txt" << endl;
+	}
+}
+
 
 int main()
 {
@@ -1154,20 +1207,29 @@ int main()
 				break;
 			}
 
-			string criterion, filename;
+			string criterion;
 			cout << "Выберите критерий сортировки (name/years/gender/place/education/kids/job) или введите 'отмена' для выхода в главное меню: ";
 			getline(cin, criterion);
 			if (criterion == "отмена") {
 				cout << "Сортировка отменена." << endl;
 				break;
 			}
-			cout << "Введите имя файла (без расширения) для сохранения результатов сортировки: ";
+
+			sortData(criterion);
+
+			string filename;
+			cout << " " << endl;
+			cout << "Введите имя файла (без расширения) для сохранения результатов сортировки или введите 'отмена' для отмены: ";
 			getline(cin, filename);
+			if (filename == "отмена") {
+				cout << "Сохранение в файл отменено." << endl;
+				break;
+			}
 			filename += ".txt";
-			printData(criterion, filename);
 			cout << "Результаты сортировки сохранены в файле." << endl;
 			break;
 		}
+
 		case 7:
 			search();
 			break;
@@ -1196,9 +1258,7 @@ int main()
 
 		case 11:
 		{
-			string directory = "C:/Users/PC/Desktop/Учеба/2 семестр/Программирование на высоком уровне/Курсовая2/Курсовая2/Курсовая2"; 
-			listFilesInDirectory(directory);
-
+			readTxtFilesFromCurrentDirectory();
 			break;
 		}
 
