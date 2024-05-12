@@ -93,6 +93,7 @@ void saveToFile(const string& filename, const vector<Person>& people) {
 			cout << "Файл с именем " << filename << " уже существует. Желаете перезаписать его?\n";
 			cout << "1. Да\n";
 			cout << "2. Нет\n";
+			cout << "Ваш выбор: ";
 			getline(cin, choice);
 
 			if (choice == "1") {
@@ -558,18 +559,18 @@ void printMenu()
 	cout << "1. Добавить запись" << endl;
 	cout << "2. Удалить запись" << endl;
 	cout << "3. Редактировать запись" << endl;
-	cout << "4. Вывод всех данных пользователей" << endl;
+	cout << "4. Вывод всех данных переписи населения" << endl;
 	cout << "5. Расчет среднего возраста" << endl;
-	cout << "6. Сортировать данные и сохранение результатов в файл" << endl;
-	cout << "7. Поиск по ФИО" << endl;
+	cout << "6. Сортировка данных" << endl;
+	cout << "7. Поиск" << endl;
 	cout << "8. Сохранить данные в файл" << endl;
 	cout << "9. Загрузить данные из файла" << endl;
 	cout << "10. Очистить список" << endl;
 	cout << "11. Вывод списка всех файлов в рабочей папке" << endl;
 	cout << "12. Вывод списка однофамильцев с одинаковыми городами" << endl;
 	cout << "13. Расчет процента россиян с высшим образованием" << endl;
-	cout << "14. Найти самый населенный город" << endl;
-	cout << "15. Руководство пользвателя(справка)" << endl;
+	cout << "14. Самый населенный город" << endl;
+	cout << "15. Руководство пользвателя (справка)" << endl;
 	cout << "16. Задание" << endl;
 	cout << "17. О программе" << endl;
 	cout << "18. Выход" << endl;
@@ -610,7 +611,7 @@ void printTable(const vector<Person>& people) {
 
 	// Печать разделителя
 	cout << setfill('-') << setw(4 + max_name_length + max_year_length + max_gender_length
-		+ max_place_length + max_education_length + max_kids_length + max_job_length) << "-" << endl;
+		+ max_place_length + max_education_length + max_kids_length + max_job_length+10) << "-" << endl;
 
 	// Печать данных о людях
 	for (size_t i = 0; i < people.size(); ++i) {
@@ -733,8 +734,8 @@ void editPerson() {
 	if (it != people.end()) {
 		Person& person = *it;
 
-		cout << "Хотите изменить данные полностью или отдельный пункт?" << endl;
-		cout << "1. Полностью" << endl;
+		cout << "Хотите изменить все пункты данных или отдельный пункт?" << endl;
+		cout << "1. Все пункты" << endl;
 		cout << "2. Отдельный пункт" << endl;
 		cout << "Выберите: ";
 
@@ -1063,6 +1064,7 @@ void search(const vector<Person>& people) {
 	cout << "Выберите метод поиска:" << endl;
 	cout << "1. По данным (фамилия, год рождения, пол)" << endl;
 	cout << "2. По началу фамилии" << endl;
+	cout << "3. По любому полю записи" << endl;
 
 	int choice;
 	cout << "Ваш выбор: ";
@@ -1100,6 +1102,7 @@ void search(const vector<Person>& people) {
 		// Выводим результаты поиска в виде таблицы
 		printTable(foundPeople);
 
+		cout << " " << endl;
 		// Спрашиваем пользователя, хочет ли он сохранить результаты поиска в файл
 		cout << "Хотите сохранить результаты поиска в файл? (да/нет): ";
 		string saveChoice;
@@ -1170,8 +1173,96 @@ void search(const vector<Person>& people) {
 			}
 		}
 	}
+	else if (choice == 3) {
+		int searchFieldChoice;
+		cout << "По какому полю записи искать?" << endl;
+		cout << "1. ФИО" << endl;
+		cout << "2. Год рождения" << endl;
+		cout << "3. Пол" << endl;
+		cout << "4. Адрес" << endl;
+		cout << "5. Уровень образования" << endl;
+		cout << "6. Количество детей" << endl;
+		cout << "7. Род занятий" << endl;
+		// Добавляем все поля записи в меню
+		cout << "Ваш выбор: ";
+		cin >> searchFieldChoice;
+		cin.ignore();
+
+		string value;
+		cout << "Введите значение поля, данные которого хотите найти: ";
+		getline(cin, value);
+
+		cout << endl;
+
+		// Создаем временный вектор для хранения найденных людей
+		vector<Person> foundPeople;
+
+		// Проверяем каждого человека в векторе
+		for (const auto& person : people) {
+			// Проверяем, соответствует ли значение в указанном поле
+			if (searchFieldChoice == 1 && person.name_person == value) {
+				// Добавляем найденного человека во временный вектор
+				foundPeople.push_back(person);
+			}
+			else if (searchFieldChoice == 2 && person.years_old == stoi(value)) {
+				// Добавляем найденного человека во временный вектор
+				foundPeople.push_back(person);
+			}
+			else if (searchFieldChoice == 3 && person.gender == value) {
+				// Добавляем найденного человека во временный вектор
+				foundPeople.push_back(person);
+			}
+			else if (searchFieldChoice == 4 && person.place_life == value) {
+				// Добавляем найденного человека во временный вектор
+				foundPeople.push_back(person);
+			}
+			else if (searchFieldChoice == 5 && person.education_level == value) {
+				// Добавляем найденного человека во временный вектор
+				foundPeople.push_back(person);
+			}
+			else if (searchFieldChoice == 6 && person.count_kids == stoi(value)) {
+				// Добавляем найденного человека во временный вектор
+				foundPeople.push_back(person);
+			}
+			else if (searchFieldChoice == 7 && person.job == value) {
+				// Добавляем найденного человека во временный вектор
+				foundPeople.push_back(person);
+			}
+			// Добавьте дополнительные условия для других полей, если необходимо
+		}
+
+		// Проверяем, были ли найдены какие-либо результаты
+		if (foundPeople.empty()) {
+			cout << "По вашему запросу ничего не найдено." << endl;
+		}
+		else {
+			// Выводим результаты поиска в виде таблицы
+			printTable(foundPeople);
+
+			// Спрашиваем пользователя, хочет ли он сохранить результаты поиска в файл
+			cout << "Хотите сохранить результаты поиска в файл? (да/нет): ";
+			string saveChoice;
+			getline(cin, saveChoice);
+
+			if (saveChoice == "да") {
+				string filename;
+				cout << "Введите название файла (без расширения '.txt'): ";
+				getline(cin, filename);
+				filename += ".txt";
+
+				// Сохраняем результаты поиска в файл
+				saveToFile(filename, foundPeople);
+			}
+			else if (saveChoice == "нет") {
+				cout << "Результаты поиска не сохранены." << endl;
+			}
+			else {
+				cout << "Некорректный выбор. Результаты поиска не сохранены." << endl;
+			}
+		}
+	}
 	else {
-		cout << "Некорректный выбор. Пожалуйста, выберите 1 или 2." << endl;
+		cout << "Некорректный выбор. Пожалуйста, выберите 1, 2 или 3." << endl;
 	}
 }
 
