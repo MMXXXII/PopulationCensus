@@ -33,7 +33,7 @@
 #include <codecvt>
 #include <locale>
 #include <map>
-
+#include <regex>
 
 
 using namespace std;
@@ -72,13 +72,13 @@ int countWords(const string& str) {
 	return count;
 }
 
-bool containsSpecialCharacters(const string& str) {
+bool containsSpecialCharacters(const std::string& str) {
 	for (char c : str) {
-		if (c == '=' || c == '%' || c == '$' || c == '#' || c == '!' || c == '*' || c == '?' || c == '&' || c == ':' || c == ';' || c == '"' || c == '#' || c == '/') {
-			return true;
+		if (!isalnum(c)) { // Проверяем, является ли символ буквой или цифрой
+			return true; // Если хотя бы один символ не является буквой или цифрой, возвращаем true
 		}
 	}
-	return false;
+	return false; // Если все символы буквы или цифры, возвращаем false
 }
 
 bool fileExists(const string& filename) {
@@ -156,86 +156,111 @@ string personToString(const Person& person) {
 	return ss.str();
 }
 
+void capitalizeFirstLetter(string& str) {
+	bool makeUpper = true;
+	for (char& ch : str) {
+		if (makeUpper && islower(ch)) {
+			ch = toupper(ch);
+			makeUpper = false;
+		}
+		else if (isspace(ch)) {
+			makeUpper = true;
+		}
+	}
+}
+
+
 void addPerson() {
 	Person person;
 
+
+
+
 	cout << "Введите ФИО: ";
+
 	// Считываем ФИО, пропуская последний пробел
 	getline(cin >> ws, person.name_person);
+
+	capitalizeFirstLetter(person.name_person);
 
 	// Удаляем пробел в конце, если он есть
 	if (!person.name_person.empty() && person.name_person.back() == ' ') {
 		person.name_person.pop_back();
 	}
 
-	// Проверяем, содержит ли ФИО цифры
-	while (containsDigit(person.name_person)) {
-		cout << "ФИО не должно содержать цифры. Пожалуйста, введите снова: ";
-		getline(cin >> ws, person.name_person);
+	while (true) {
+		regex reg("[А-ЯЁ][а-яё]+ +[А-ЯЁ][а-яё]+ +[А-ЯЁ][а-яё]+");
+		if (regex_match(person.name_person, reg)) {
+			break;
+		}
+		else {
+			cout << "ФИО должно состоять из трех слов, начинаться с заглавных букв и не иметь цифр и специальных символов. Пожалуйста, введите ФИО заново: ";
+			getline(cin >> ws, person.name_person);
+			capitalizeFirstLetter(person.name_person);
+		}
 	}
 
-	// Проверяем, что ФИО введено полностью и состоит из трех слов
-	while (countWords(person.name_person) != 3) {
-		cout << "ФИО должно состоять из трех слов. Пожалуйста, введите полное ФИО: ";
-		getline(cin >> ws, person.name_person);
-	}
 
-	//stringstream ss(person.name_person);
-	//string word;
-	//bool isValid = true;
-	//int wordCount = 0;
-	//while (ss >> word) {
-	//	++wordCount;
-	//	if (word.empty() || !isupper(word[0])) {
-	//		isValid = false;
-	//		break;
-	//	}
-	//}
-	//if (wordCount != 3 || !isValid) {
-	//	cout << "Каждая часть ФИО (Фамилия, Имя, Отчество) должна начинаться с заглавной буквы. Пожалуйста, введите снова." << endl;
-	//	addPerson(); // Рекурсивно повторяем ввод ФИО
-	//	return;
-	//}
 
-	// Проверяем, что ФИО не содержит специальных символов
-	while (containsSpecialCharacters(person.name_person)) {
-		cout << "ФИО не должно содержать специальные символы (%, $, # и другие). Пожалуйста, введите снова: ";
-		getline(cin >> ws, person.name_person);
-	}
 
 	cout << "Введите год рождения: ";
-	while (!(cin >> person.years_old) || person.years_old < 1900 || person.years_old > 2024) {
-		cout << "Год рождения должен быть не ранее 1900 и не позже 2024. Пожалуйста, введите снова: ";
-		cin.clear();
-		cin.ignore(1000, '\n');
+	string input;
+	bool validInput = false;
+
+	while (!validInput) {
+		getline(cin, input);
+
+		// Проверяем, содержит ли ввод только цифры
+		bool onlyDigits = true;
+		for (char c : input) {
+			if (!isdigit(c)) {
+				onlyDigits = false;
+				break;
+			}
+		}
+
+		// Если ввод содержит только цифры, преобразуем его в int
+		if (onlyDigits) {
+			person.years_old = stoi(input);
+			// Проверяем, чтобы год был в допустимом диапазоне
+			if (person.years_old >= 1900 && person.years_old <= 2024) {
+				validInput = true;
+			}
+		}
+
+		if (!validInput) {
+			cout << "Год рождения должен быть не ранее 1900 и не позже 2024, а так же иметь цифры или специальные символы. Пожалуйста, введите снова: ";
+		}
 	}
 
-	// Проверяем год рождения на наличие специальных символов
-	string years_old_str = to_string(person.years_old);
-	while (containsSpecialCharacters(years_old_str)) {
-		cout << "Год рождения не должен содержать специальные символы. Пожалуйста, введите снова: ";
-		cin >> person.years_old;
-		years_old_str = to_string(person.years_old);
-	}
 
-	// Запрашиваем пол
+
+
 	cout << "Введите пол (мужской/женский): ";
 	do {
 		getline(cin, person.gender);
-		if (person.gender != "мужской" && person.gender != "женский" && person.gender != "Мужской" && person.gender != "Женский") {
+		if (person.gender != "мужской" && person.gender != "женский") {
 			cout << "Некорректное значение пола. Пожалуйста, введите снова: ";
 		}
-	} while (person.gender != "мужской" && person.gender != "женский" && person.gender != "Мужской" && person.gender != "Женский");
+	} while (person.gender != "мужской" && person.gender != "женский");
 
-	// Запрашиваем место жительства
-	cout << "Введите место жительства (город): ";
-	getline(cin, person.place_life);
 
-	// Проверяем, что место жительства не содержит специальных символов и цифр
-	while (containsSpecialCharacters(person.place_life) || containsDigit(person.place_life)) {
-		cout << "Место жительства не должно содержать специальные символы или цифры. Пожалуйста, введите снова: ";
-		getline(cin, person.place_life);
+
+	while (true) {
+		regex reg("[А-ЯЁ][-а-яё]*(-[А-ЯЁ][-а-яё]*)?"); // Паттерн для проверки, что первая буква заглавная, а остальные строчные
+		cout << "Введите место жительства (город): ";
+		getline(cin >> ws, person.place_life);
+
+		if (regex_match(person.place_life, reg)) {
+			break; // Введено корректное название города
+		}
+		else {
+			cout << "Город должен начинаться с заглавной буквы. Введите место жительства (город) заново: ";
+		}
 	}
+
+
+
 
 	// Запрашиваем уровень образования
 	cout << "Введите уровень образования (среднее/среднее специальное/высшее): ";
@@ -246,93 +271,196 @@ void addPerson() {
 		}
 	} while (person.education_level != "среднее" && person.education_level != "среднее специальное" && person.education_level != "высшее");
 
-	// Запрашиваем количество детей
+
+
 	cout << "Введите количество детей: ";
-	while (!(cin >> person.count_kids) || person.count_kids < 0 || person.count_kids > 200) {
-		if (person.count_kids < 0) {
-			cout << "Количество детей должно быть неотрицательным числом. Пожалуйста, введите снова: ";
+	string inputStr;
+	bool validInputMean = false;
+
+	while (!validInputMean) {
+		cin >> inputStr;
+
+		if (!containsSpecialCharacters(inputStr)) {
+			person.count_kids = stoi(inputStr);
+			if (person.count_kids >= 0 && person.count_kids <= 200) {
+				validInputMean = true;
+			}
+			else {
+				cout << "Количество детей должно быть неотрицательным числом и не превышать 200. Пожалуйста, введите снова: ";
+			}
 		}
 		else {
-			cout << "Количество детей не должно превышать 200. Пожалуйста, введите снова: ";
+			cout << "Количество детей должно быть целым числом. Пожалуйста, введите снова: ";
 		}
-		cin.clear();
-		cin.ignore(1000, '\n');
+
+		if (cin.fail()) {
+			cin.clear();
+			cin.ignore(1000, '\n');
+		}
 	}
+
+	cin.ignore(1000, '\n');
+
+
 
 	// Запрашиваем место работы
 	cout << "Введите место работы: ";
 	getline(cin, person.job);
 
+
+
+
+
+
 	cout << " " << endl;
 	// Проверяем данные
 	string confirmation;
+	cout << " " << endl;
 	cout << "Проверьте введенные данные:\n" << personToString(person) << "\nДанные введены верно? (да/нет): ";
 	getline(cin, confirmation);
 
 	// Повторяем запрос на корректировку, если данные введены неверно
 	while (confirmation != "да" && confirmation != "Да") {
-		cout << "Что нужно изменить? Выберите поле для редактирования (ФИО, год рождения, пол и т.д.): ";
-		string fieldToEdit;
-		getline(cin, fieldToEdit);
+		cout << "Что нужно изменить?" << endl;
+		cout << "1. ФИО" << endl;
+		cout << "2. Год рождения" << endl;
+		cout << "3. Пол" << endl;
+		cout << "4. Место жительства" << endl;
+		cout << "5. Уровень образования" << endl;
+		cout << "6. Количество детей" << endl;
+		cout << "7. Место работы" << endl;
+		cout << "Выберите номер поля для редактирования: ";
 
-		// Редактируем выбранное поле
-		if (fieldToEdit == "ФИО") {
+		int choice;
+		cin >> choice;
+		cin.ignore(); // Очищаем буфер ввода после чтения числа
+
+		switch (choice) {
+		case 1: {
 			cout << "Введите ФИО заново: ";
 			getline(cin, person.name_person);
-		}
-		else if (fieldToEdit == "год рождения") {
-			cout << "Введите год рождения заново: ";
-			while (!(cin >> person.years_old) || person.years_old < 1900 || person.years_old > 2024) {
-				cout << "Год рождения должен быть числом и не превышать текущий год. Пожалуйста, введите снова: ";
-				cin.clear();
-				cin.ignore(1000, '\n');
+			capitalizeFirstLetter(person.name_person);
+			// Удаляем пробел в конце, если он есть
+			if (!person.name_person.empty() && person.name_person.back() == ' ') {
+				person.name_person.pop_back();
 			}
-			cin.ignore();
+			// Проверяем ввод на соответствие шаблону
+			while (true) {
+				regex reg("[А-ЯЁ][а-яё]+ +[А-ЯЁ][а-яё]+ +[А-ЯЁ][а-яё]+");
+				if (regex_match(person.name_person, reg)) {
+					break;
+				}
+				else {
+					cout << "ФИО должно состоять из трех слов, начинаться с заглавных букв и не иметь цифр и специальных символов. Пожалуйста, введите ФИО заново: ";
+					getline(cin, person.name_person);
+					capitalizeFirstLetter(person.name_person);
+				}
+			}
+			break;
 		}
-		else if (fieldToEdit == "пол") {
+		case 2: {
+			cout << "Введите год рождения заново: ";
+			string input;
+			bool validInput = false;
+
+			while (!validInput) {
+				getline(cin, input);
+
+				// Проверяем, содержит ли ввод только цифры
+				bool onlyDigits = true;
+				for (char c : input) {
+					if (!isdigit(c)) {
+						onlyDigits = false;
+						break;
+					}
+				}
+
+				// Если ввод содержит только цифры, преобразуем его в int и присваиваем переменной years_old
+				if (onlyDigits) {
+					person.years_old = stoi(input); // Присваиваем значение года переменной years_old
+					// Проверяем, чтобы год был в допустимом диапазоне
+					if (person.years_old >= 1900 && person.years_old <= 2024) {
+						validInput = true;
+					}
+				}
+
+				if (!validInput) {
+					cout << "Год рождения должен быть не ранее 1900 и не позже 2024, а так же иметь цифры или специальные символы. Пожалуйста, введите снова: ";
+				}
+			}
+			break;
+		}
+
+		case 3: {
 			cout << "Введите пол (мужской/женский): ";
 			do {
 				getline(cin, person.gender);
-				if (person.gender != "мужской" && person.gender != "женский") {
-					cout << "Некорректное значение пола. Пожалуйста, введите снова: ";
-				}
 			} while (person.gender != "мужской" && person.gender != "женский");
+			break;
 		}
-		else if (fieldToEdit == "место жительства") {
+		case 4: {
 			cout << "Введите место жительства (город): ";
-			getline(cin, person.place_life);
+			while (true) {
+				regex reg("[А-ЯЁ][-а-яё]*"); // Паттерн для проверки, что первая буква заглавная, а остальные строчные
+				getline(cin, person.place_life);
+
+				if (regex_match(person.place_life, reg)) {
+					break; // Введено корректное название города
+				}
+				else {
+					cout << "Город должен начинаться с заглавной буквы. Введите место жительства (город) заново: ";
+				}
+			}
+			break;
 		}
-		else if (fieldToEdit == "уровень образования") {
+		case 5: {
 			cout << "Введите уровень образования (среднее/среднее специальное/высшее): ";
 			do {
 				getline(cin, person.education_level);
-				if (person.education_level != "среднее" && person.education_level != "среднее специальное" && person.education_level != "высшее") {
-					cout << "Некорректное значение уровня образования. Пожалуйста, введите снова (среднее/среднее специальное/высшее): ";
-				}
 			} while (person.education_level != "среднее" && person.education_level != "среднее специальное" && person.education_level != "высшее");
+			break;
 		}
-		else if (fieldToEdit == "количество детей") {
+		case 6: {
 			cout << "Введите количество детей: ";
-			while (!(cin >> person.count_kids) || person.count_kids < 0 || person.count_kids > 200) {
-				if (person.count_kids < 0) {
-					cout << "Количество детей должно быть неотрицательным числом. Пожалуйста, введите снова: ";
+			string inputStr;
+			bool validInputMean = false;
+
+			while (!validInputMean) {
+				cin >> inputStr;
+
+				if (!containsSpecialCharacters(inputStr)) {
+					person.count_kids = stoi(inputStr);
+					if (person.count_kids >= 0 && person.count_kids <= 200) {
+						validInputMean = true;
+					}
+					else {
+						cout << "Количество детей должно быть неотрицательным числом и не превышать 200. Пожалуйста, введите снова: ";
+					}
 				}
 				else {
-					cout << "Вы ввели данные, которые невозможны. Количество детей не должно превышать 200. Пожалуйста, введите снова: ";
+					cout << "Количество детей должно быть целым числом. Пожалуйста, введите снова: ";
 				}
-				cin.clear();
-				cin.ignore(1000, '\n');
+
+				if (cin.fail()) {
+					cin.clear();
+					cin.ignore(1000, '\n');
+				}
 			}
-			cin.ignore();
+
+			cin.ignore(1000, '\n');
+			break;
 		}
-		else if (fieldToEdit == "место работы") {
+		case 7: {
 			cout << "Введите место работы: ";
 			getline(cin, person.job);
+			break;
 		}
-		else {
-			cout << "Выбранное поле для редактирования не найдено.\n";
+		default:
+			cout << "Некорректный выбор. Пожалуйста, выберите номер поля для редактирования от 1 до 7." << endl;
+			continue; // Продолжаем цикл, чтобы пользователь мог выбрать снова
 		}
 
+		cout << " " << endl;
 		// Проверяем данные снова
 		cout << "Проверьте введенные данные:\n" << personToString(person) << "\nДанные введены верно? (да/нет): ";
 		getline(cin, confirmation);
@@ -341,6 +469,7 @@ void addPerson() {
 	// Проверяем и сохраняем отредактированные данные при корректном вводе
 	cout << "Данные успешно сохранены!" << endl << endl;
 	people.push_back(person);
+
 }
 
 
@@ -808,35 +937,41 @@ void search(const vector<Person>& people) {
 
 		// Проверяем каждого человека в векторе
 		for (const auto& person : people) {
-			// Проверяем, начинается ли фамилия с указанной последовательности символов
-			if (person.name_person.find(surname) == 0) {
+			// Проверяем, содержится ли указанная последовательность символов в фамилии
+			if (person.name_person.find(surname) != string::npos) {
 				// Добавляем найденного человека во временный вектор
 				foundPeople.push_back(person);
 			}
 		}
 
-		// Выводим результаты поиска в виде таблицы
-		printTable(foundPeople);
-
-		// Спрашиваем пользователя, хочет ли он сохранить результаты поиска в файл
-		cout << "Хотите сохранить результаты поиска в файл? (да/нет): ";
-		string saveChoice;
-		getline(cin, saveChoice);
-
-		if (saveChoice == "да") {
-			string filename;
-			cout << "Введите название файла (без расширения '.txt'): ";
-			getline(cin, filename);
-			filename += ".txt";
-
-			// Сохраняем результаты поиска в файл
-			saveToFile(filename, foundPeople);
-		}
-		else if (saveChoice == "нет") {
-			cout << "Результаты поиска не сохранены." << endl;
+		// Проверяем, были ли найдены какие-либо результаты
+		if (foundPeople.empty()) {
+			cout << "По вашему запросу ничего не найдено." << endl;
 		}
 		else {
-			cout << "Некорректный выбор. Результаты поиска не сохранены." << endl;
+			// Выводим результаты поиска в виде таблицы
+			printTable(foundPeople);
+
+			// Спрашиваем пользователя, хочет ли он сохранить результаты поиска в файл
+			cout << "Хотите сохранить результаты поиска в файл? (да/нет): ";
+			string saveChoice;
+			getline(cin, saveChoice);
+
+			if (saveChoice == "да") {
+				string filename;
+				cout << "Введите название файла (без расширения '.txt'): ";
+				getline(cin, filename);
+				filename += ".txt";
+
+				// Сохраняем результаты поиска в файл
+				saveToFile(filename, foundPeople);
+			}
+			else if (saveChoice == "нет") {
+				cout << "Результаты поиска не сохранены." << endl;
+			}
+			else {
+				cout << "Некорректный выбор. Результаты поиска не сохранены." << endl;
+			}
 		}
 	}
 	else {
